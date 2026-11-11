@@ -44,13 +44,10 @@ SYSTEM_PROMPT = (
     "Patient: No, I am not experiencing any pain or discomfort.\n"
     "Reply: I'm glad to hear you're not having any pain.\n"
     "Question: Are you experiencing any pain or discomfort? "
-    "Patient: I have mild ankle pain.\n"
-    "Reply: I'm sorry you're dealing with that ankle pain.\n"
+    "Patient: I have some pain.\n"
+    "Reply: I'm sorry you're dealing with that.\n"
     "Question: Is this a good time to talk? Patient: Yes, this is a good time.\n"
-    "Reply: Wonderful, thank you for making the time.\n"
-    "Question: Have you been able to do your prescribed toe exercise? "
-    "Patient: No, I have not done it.\n"
-    "Reply: That's all right, thank you for letting me know."
+    "Reply: Wonderful, thank you for making the time."
 )
 
 

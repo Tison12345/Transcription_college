@@ -1,0 +1,13 @@
+file,actual,similarity,predicted,correct,error
+genuine_me_S1_001.wav,genuine,0.318033,TARGET,True,
+genuine_me_S1_002.wav,genuine,0.210384,TARGET,True,
+genuine_me_S1_003.wav,genuine,0.492793,TARGET,True,
+genuine_me_S1_004.wav,genuine,0.624716,TARGET,True,
+genuine_me_S1_005.wav,genuine,0.367461,TARGET,True,
+genuine_me_S1_006.wav,genuine,0.401534,TARGET,True,
+genuine_me_S1_007.wav,genuine,0.420848,TARGET,True,
+genuine_me_S1_008.wav,genuine,0.551013,TARGET,True,
+genuine_me_S1_009.wav,genuine,0.219336,TARGET,True,
+genuine_me_S1_010.wav,genuine,0.499588,TARGET,True,
+genuine_me_S1_011.wav,genuine,0.484653,TARGET,True,
+genuine_me_S1_012.wav,genuine,0.408051,TARGET,True,

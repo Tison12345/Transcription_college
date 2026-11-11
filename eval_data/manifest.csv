@@ -1,0 +1,14 @@
+recording_id,path,speaker_id,role,session_id,notes
+enrollment,reference.wav,me,enrollment,S0_ref,"enrolled reference, never used for evaluation"
+genuine_me_S1_001,eval_data/recordings/genuine/me/S1/genuine_me_S1_001.wav,me,genuine,S1,prompt: yes
+genuine_me_S1_002,eval_data/recordings/genuine/me/S1/genuine_me_S1_002.wav,me,genuine,S1,prompt: no
+genuine_me_S1_003,eval_data/recordings/genuine/me/S1/genuine_me_S1_003.wav,me,genuine,S1,prompt: I am feeling okay today
+genuine_me_S1_004,eval_data/recordings/genuine/me/S1/genuine_me_S1_004.wav,me,genuine,S1,prompt: my pain is about three out of ten
+genuine_me_S1_005,eval_data/recordings/genuine/me/S1/genuine_me_S1_005.wav,me,genuine,S1,prompt: seven
+genuine_me_S1_006,eval_data/recordings/genuine/me/S1/genuine_me_S1_006.wav,me,genuine,S1,prompt: it hurts a little when I walk
+genuine_me_S1_007,eval_data/recordings/genuine/me/S1/genuine_me_S1_007.wav,me,genuine,S1,prompt: I slept badly last night
+genuine_me_S1_008,eval_data/recordings/genuine/me/S1/genuine_me_S1_008.wav,me,genuine,S1,"prompt: yes, I would like to try that now"
+genuine_me_S1_009,eval_data/recordings/genuine/me/S1/genuine_me_S1_009.wav,me,genuine,S1,"prompt: no, not right now"
+genuine_me_S1_010,eval_data/recordings/genuine/me/S1/genuine_me_S1_010.wav,me,genuine,S1,prompt: I took my medicine this morning
+genuine_me_S1_011,eval_data/recordings/genuine/me/S1/genuine_me_S1_011.wav,me,genuine,S1,prompt: can you repeat that please
+genuine_me_S1_012,eval_data/recordings/genuine/me/S1/genuine_me_S1_012.wav,me,genuine,S1,prompt: the swelling is better than yesterday

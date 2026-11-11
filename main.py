@@ -1,7 +1,12 @@
 
+import traceback
+
 import sounddevice as sd
 
-from audio.utterance_detector import capture_one_utterance
+from audio.utterance_detector import (
+    capture_one_utterance,
+    LAST_CAPTURE_INFO,
+)
 from audio.transcribe import (
     load_whisper_model,
     transcribe_audio_with_confidence,
@@ -11,21 +16,29 @@ from audio.speaker_verification import (
     create_embedding,
     verify_speaker,
 )
-from dialogue.state_machine import DialogueStateMachine, State
-from output.tts import speak
+from audio.rolling_verifier import (
+    RollingSpeakerVerifier,
+    format_result,
+    format_skip,
+)
+from dialogue.call_loop import run_conversation
+from dialogue.state_machine import DialogueStateMachine
 
 
 REFERENCE_AUDIO = "reference.wav"
 
-NO_SPEECH_MESSAGE = (
-    "Sorry, I didn't catch that. Could you please say that again?"
-)
 
 
-def listen(whisper_model, speaker_model, reference_embedding):
+def listen(
+    whisper_model,
+    speaker_model,
+    reference_embedding,
+    rolling_verifier=None,
+):
     """Capture speech, compare the voice, and transcribe it."""
 
-    audio_file = capture_one_utterance()
+    # The rolling verifier is log-only: it never changes the audio.
+    audio_file = capture_one_utterance(verifier=rolling_verifier)
 
     if audio_file is None:
         return None
@@ -33,13 +46,22 @@ def listen(whisper_model, speaker_model, reference_embedding):
     # Speaker verification
     print("\nChecking speaker similarity...")
 
-    similarity = verify_speaker(
-        speaker_model,
-        reference_embedding,
-        audio_file
-    )
+    # ECAPA uses the trimmed recording; Whisper below uses the full one.
+    speaker_file = LAST_CAPTURE_INFO.get("speaker_path", audio_file)
 
-    print(f"Speaker similarity score: {similarity:.4f}")
+    # Log-only feature: a failure here must never end the call.
+    try:
+        similarity = verify_speaker(
+            speaker_model,
+            reference_embedding,
+            speaker_file
+        )
+        print(f"Speaker similarity score: {similarity:.4f}")
+    except Exception:
+        similarity = None
+        print("[error] speaker check failed (ignored, log-only):")
+        traceback.print_exc()
+
     print("Speaker verification is currently running in monitoring mode.")
 
     # Speech recognition
@@ -76,54 +98,31 @@ def main():
 
     print("Patient reference voice loaded successfully!")
 
+    # Created once: reuses the loaded ECAPA model and the reference
+    # embedding. Log-only - results are printed, nothing is filtered.
+    # background=True keeps ECAPA inference off the capture loop.
+    rolling_verifier = RollingSpeakerVerifier(
+        model=speaker_model,
+        reference_embedding=reference_embedding,
+        background=True,
+        require_turn=True,
+        on_result=lambda result: print(format_result(result)),
+        on_skip=lambda total_sec: print(format_skip(total_sec)),
+    )
+
     agent = DialogueStateMachine()
 
     print("\nPatient follow-up assistant is ready!")
 
-    while agent.state != State.FINISHED:
-
-        print(f"\nCurrent state: {agent.state.name}")
-
-        if not agent.prompt_spoken:
-            prompt = agent.get_prompt()
-            print("Assistant:", prompt)
-            speak(prompt)
-            agent.prompt_spoken = True
-
-        if agent.state == State.CLOSING:
-            agent.state = State.FINISHED
-            break
-
-        try:
-            result = listen(
-                whisper_model,
-                speaker_model,
-                reference_embedding
-            )
-
-        except sd.PortAudioError as error:
-            print(f"\nMicrophone error: {error}")
-            print("Check the microphone and the INPUT_DEVICE setting.")
-            return
-
-        except Exception as error:
-            print(f"\nProcessing error: {error}")
-            return
-
-        if result is None:
-            print("No usable speech detected.")
-            speak(NO_SPEECH_MESSAGE)
-            continue
-
-        transcript = result["text"]
-
-        print(f"\nPatient: {transcript}")
+    def report(result):
+        print(f"\nPatient: {result['text']}")
 
         print("\n--- Speaker Verification ---")
-        print(
-            f"Similarity Score: "
-            f"{result['speaker_similarity']:.4f}"
-        )
+        similarity = result.get("speaker_similarity")
+        if similarity is None:
+            print("Similarity Score: unavailable")
+        else:
+            print(f"Similarity Score: {similarity:.4f}")
 
         print("\n--- Whisper Confidence Metrics ---")
         print(f"Average Log Probability: {result['avg_logprob']}")
@@ -134,10 +133,30 @@ def main():
         print(f"Number of Segments: {result['num_segments']}")
         print(f"Audio Duration: {result['duration']} seconds")
 
-        # Monitoring mode: all non-empty transcripts still reach the FSM.
-        agent.process_response(transcript)
+    try:
+        # Monitoring mode: all non-empty transcripts still reach the
+        # dialogue. Whisper's confidence now influences re-asking there.
+        run_conversation(
+            agent,
+            lambda: listen(
+                whisper_model,
+                speaker_model,
+                reference_embedding,
+                rolling_verifier,
+            ),
+            report,
+        )
 
-    print("\nFollow-up conversation completed.")
+    finally:
+        # Always release audio, even after an unexpected error.
+        try:
+            sd.stop()
+        except Exception:
+            traceback.print_exc()
+        try:
+            rolling_verifier.end_turn()
+        except Exception:
+            traceback.print_exc()
 
 
 if __name__ == "__main__":
